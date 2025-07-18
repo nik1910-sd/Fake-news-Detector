@@ -36,6 +36,6 @@ if __name__ == '__main__':
         prediction_class=fake_news(sentence)
         print(prediction_class)
         if prediction_class == [0]:
-            st.success('✅Reliable')
+            st.success('✅ This news is likely Real.')
         if prediction_class == [1]:
-            st.warning('🚨Unreliable')
+            st.warning('🚨 This news is likely Fake.')

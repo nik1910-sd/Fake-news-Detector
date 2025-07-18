@@ -1,31 +1,41 @@
 import streamlit as st
-import joblib
+import pickle
+import re
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+from sklearn.feature_extraction.text import TfidfVectorizer
+port_stem = PorterStemmer()
+vectorization = TfidfVectorizer()
 
-# Load the model and TF-IDF vectorizer
-model = joblib.load("model.joblib")
-tfidf = joblib.load("tfidf.joblib")
+vector_form = pickle.load(open('vector.pkl', 'rb'))
+load_model = pickle.load(open('model.pkl', 'rb'))
 
-# Streamlit app interface
-st.set_page_config(page_title="Fake News Detector", page_icon="📰")
+def stemming(content):
+    con=re.sub('[^a-zA-Z]', ' ', content)
+    con=con.lower()
+    con=con.split()
+    con=[port_stem.stem(word) for word in con if not word in stopwords.words('english')]
+    con=' '.join(con)
+    return con
 
-st.title("📰 Fake News Detection")
-st.markdown("Check if a news article is **Real** or **Fake** using a Machine Learning model.")
-
-# User input
-user_input = st.text_area("Enter the news content here:", height=200)
-
-if st.button("Check"):
-    if not user_input.strip():
-        st.warning("Please enter some news text.")
-    else:
-        # Preprocess and predict
-        vectorized_input = tfidf.transform([user_input])
-        prediction = model.predict(vectorized_input)[0]
-
-        # Output result
-        if prediction == 1:
-            st.success("✅ This news is likely **Real**.")
-        else:
-            st.error("🚨 This news is likely **Fake**.")
+def fake_news(news):
+    news=stemming(news)
+    input_data=[news]
+    vector_form1=vector_form.transform(input_data)
+    prediction = load_model.predict(vector_form1)
+    return prediction
 
 
+
+if __name__ == '__main__':
+    st.title("📰 Fake News Detection")
+    st.subheader("Check whether a news article is Fake or Real")
+    sentence = st.text_area("Enter your news headline here", "",height=200)
+    predict_btt = st.button("predict")
+    if predict_btt:
+        prediction_class=fake_news(sentence)
+        print(prediction_class)
+        if prediction_class == [0]:
+            st.success('✅Reliable')
+        if prediction_class == [1]:
+            st.warning('🚨Unreliable')
